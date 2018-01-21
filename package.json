@@ -25,7 +25,7 @@
     "storybook": "start-storybook -p 9001 -c .storybook"
   },
   "precommit": [
-    "check"
+    
   ],
   "license": "Apache-2.0",
   "peerDependencies": {
@@ -117,5 +117,9 @@
     "webpack-dev-server": "^2.4.5",
     "webpack-node-externals": "^1.6.0",
     "webpack-sources": "1.0.1"
+  },
+  "dependencies": {
+    "react-bootstrap-table": "^4.3.1",
+    "vis": "^4.21.0"
   }
 }

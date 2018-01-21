@@ -8,83 +8,41 @@ const debug = require('debug')('mongodb-compass:stores:compass-profiler-visualiz
  * Compass Profiler Visualize store.
  */
 const CompassProfilerVisualizeStore = Reflux.createStore({
-  /**
-   * adds a state to the store, similar to React.Component's state
-   * @see https://github.com/yonatanmn/Super-Simple-Flux#reflux-state-mixin
-   *
-   * If you call `this.setState({...})` this will cause the store to trigger
-   * and push down its state as props to connected components.
-   */
+
   mixins: [StateMixin.store],
 
-  /**
-   * listen to all actions defined in ../actions/index.js
-   */
   listenables: CompassProfilerVisualizeActions,
 
-  /**
-   * Initialize everything that is not part of the store's state. This happens
-   * when the store is required and instantiated. Stores are singletons.
-   */
+  mockup: true,
+  compass: false,
+  data: {},
+
   init() {
+    this.refresh();
   },
 
-  /**
-   * This method is called when all plugins are activated. You can register
-   * listeners to other plugins' stores here, e.g.
-   *
-   * appRegistry.getStore('OtherPlugin.Store').listen(this.otherStoreChanged.bind(this));
-   *
-   * If this plugin does not depend on other stores, you can delete the method.
-   *
-   * @param {Object} appRegistry - app registry containing all stores and components
-   */
-  // eslint-disable-next-line no-unused-vars
+  refresh() {
+    if (this.mockup) {
+      this.data = this.getMockState();
+      this.setState(this.data);
+    }
+  },
+
   onActivated(appRegistry) {
-    // Events emitted from the app registry:
-    //
-    // appRegistry.on('application-intialized', (version) => {
-    //   // Version is string in semver format, ex: "1.10.0"
-    // });
-    //
-    // appRegistry.on('data-service-intialized', (dataService) => {
-    //   // dataService is not yet connected. Can subscribe to events.
-    //   // DataService API: https://github.com/mongodb-js/data-service/blob/master/lib/data-service.js
-    // });
-    //
-    // appRegistry.on('data-service-connected', (error, dataService) => {
-    //   // dataService is connected or errored.
-    //   // DataService API: https://github.com/mongodb-js/data-service/blob/master/lib/data-service.js
-    // });
-    //
-    // appRegistry.on('collection-changed', (namespace) => {
-    //   // The collection has changed - provides the current namespace.
-    //   // Namespace format: 'database.collection';
-    //   // Collection selected: 'database.collection';
-    //   // Database selected: 'database';
-    //   // Instance selected: '';
-    // });
-    //
-    // appRegistry.on('database-changed', (namespace) => {
+
+     appRegistry.on('data-service-connected', (error, dataService) => {
+       // dataService is connected or errored.
+       // DataService API: https://github.com/mongodb-js/data-service/blob/master/lib/data-service.js
+     });
+
+     appRegistry.on('database-changed', (namespace) => {
     //   // The database has changed.
     //   // Namespace format: 'database.collection';
     //   // Collection selected: 'database.collection';
     //   // Database selected: 'database';
     //   // Instance selected: '';
-    // });
-    //
-    // appRegistry.on('query-applied', (queryState) => {
-    //   // The query has changed and the user has clicked "filter" or "reset".
-    //   // queryState format example:
-    //   //   {
-    //   //     filter: { name: 'testing' },
-    //   //     project: { name: 1 },
-    //   //     sort: { name: -1 },
-    //   //     skip: 0,
-    //   //     limit: 20,
-    //   //     ns: 'database.collection'
-    //   //   }
-    // });
+    });
+
   },
 
   /**
@@ -95,18 +53,12 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
    */
   getInitialState() {
     return {
-      status: 'enabled'
+        "topQueries": [],
+        "slowQueriesOverTime": [],
+        "currentQueryDetails": ""
     };
   },
 
-  /**
-   * handlers for each action defined in ../actions/index.jsx, for example:
-   */
-  toggleStatus() {
-    this.setState({
-      status: this.state.status === 'enabled' ? 'disabled' : 'enabled'
-    });
-  },
 
   /**
    * log changes to the store as debug messages.
@@ -114,7 +66,63 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
    */
   storeDidUpdate(prevState) {
     debug('CompassProfilerVisualize store changed from', prevState, 'to', this.state);
+  },
+
+  getMockState() {
+    return {
+      "topQueries": [
+      {
+        "ix": 1,
+        "ns": "audits.events",
+        "operation": "find",
+        "query": "{type: 1, ts: 1}",
+        "count": 300,
+        "min": 149,
+        "max": 16300,
+        "mean": 4320,
+        "percNintyFive": 8722,
+        "sum": 124230
+      },
+      {
+        "ix": 2,
+        "ns": "audits.customerEvents",
+        "operation": "find",
+        "query": "{type: 1, ts: 1, customer: 1}",
+        "count": 133,
+        "min": 112,
+        "max": 19300,
+        "mean": 5110,
+        "percNintyFive": 9722,
+        "sum": 77230
+      }
+    ],
+    "slowQueriesOverTime": [
+      {
+        "ts": new Date(Date.UTC(2018, 1, 8, 14, 0, 0)),
+        "ns": "audits.events",
+        "operation": "find",
+        "query": "{type: 'sdfsdf', ts: {$gt: 1739992992}}",
+        "duration": 10030
+      },
+      {
+        "ts": new Date(Date.UTC(2018, 1, 8, 14, 5, 0)),
+        "ns": "audits.events",
+        "operation": "find",
+        "query": "{type: 'ababa', ts: {$gt: 1739992992}}",
+        "duration": 8192
+      },
+      {
+        "ts": new Date(Date.UTC(2018, 1, 8, 14, 6, 0)),
+        "ns": "audits.customerEvents",
+        "operation": "find",
+        "query": "{type: 'ababa', ts: {$gt: 1739992992}, customer: 'assas'}",
+        "duration": 1282
+      }
+    ],
+    "currentQueryDetails": "{type: 'ababa', ts: {$gt: 1739992992}, customer: 'assas'}"
+    }
   }
+
 });
 
 export default CompassProfilerVisualizeStore;

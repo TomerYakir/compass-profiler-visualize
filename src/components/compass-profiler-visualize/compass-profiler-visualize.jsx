@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
-import ToggleButton from 'components/toggle-button';
+import TopQueries from 'components/top-queries';
+import SlowQueriesOverTime from 'components/slow-queries-over-time';
 
 import styles from './compass-profiler-visualize.less';
 
@@ -10,15 +11,15 @@ class CompassProfilerVisualize extends Component {
 
   static propTypes = {
     actions: PropTypes.object.isRequired,
-    status: PropTypes.oneOf(['enabled', 'disabled'])
+    topQueries: PropTypes.array
   };
 
   static defaultProps = {
-    status: 'enabled'
+    topQueries: []
   };
 
   onClick = () => {
-    this.props.actions.toggleStatus();
+    this.props.actions.refresh();
   }
 
   /**
@@ -28,11 +29,15 @@ class CompassProfilerVisualize extends Component {
    */
   render() {
     return (
-      <div className={classnames(styles.root)}>
-        <h2 className={classnames(styles.title)}>CompassProfilerVisualize Plugin</h2>
-        <p>Visualize system profiler. Identify top slow queries and show slow queries over time.</p>
-        <p>The current status is: <code>{this.props.status}</code></p>
-        <ToggleButton onClick={this.onClick} />
+      <div >
+        <h4 className={classnames(styles.title)}>Top Queries</h4>
+        <TopQueries topQueries={this.props.topQueries} />
+        <p></p>
+        <h4 className={classnames(styles.title)}>Slow Queries</h4>
+        <SlowQueriesOverTime
+          slowQueriesOverTime={this.props.slowQueriesOverTime}
+          currentQueryDetails={this.props.currentQueryDetails}
+          />
       </div>
     );
   }

@@ -24,7 +24,7 @@ function activate(appRegistry) {
   //   - CollectionHUD.Item: { name <String>, component: <React.Component> }
   //   - Header.Item: { name: <String>, component: <React.Component>, alignment: <String> }
 
-  appRegistry.registerRole('Collection.Tab', ROLE);
+  appRegistry.registerRole('Database.Tab', ROLE);
   appRegistry.registerAction('CompassProfilerVisualize.Actions', CompassProfilerVisualizeActions);
   appRegistry.registerStore('CompassProfilerVisualize.Store', CompassProfilerVisualizeStore);
 }
@@ -34,7 +34,7 @@ function activate(appRegistry) {
  * @param {Object} appRegistry - The Hadron appRegisrty to deactivate this plugin with.
  **/
 function deactivate(appRegistry) {
-  appRegistry.deregisterRole('Collection.Tab', ROLE);
+  appRegistry.deregisterRole('Database.Tab', ROLE);
   appRegistry.deregisterAction('CompassProfilerVisualize.Actions');
   appRegistry.deregisterStore('CompassProfilerVisualize.Store');
 }

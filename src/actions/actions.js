@@ -4,7 +4,7 @@ const CompassProfilerVisualizeActions = Reflux.createActions([
   /**
    * define your actions as strings below, for example:
    */
-  'toggleStatus'
+  'refresh'
 ]);
 
 export default CompassProfilerVisualizeActions;
