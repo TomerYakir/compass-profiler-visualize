@@ -21,7 +21,8 @@ class SlowQueriesOverTime extends Component {
 
   componentDidMount() {
 
-    // slow queries
+    const TIME_THRESHOLD = 60000; // for chart selection
+
     var container = document.getElementById("slowQueriesChart");
 
     var items = this.props.slowQueriesOverTime.map((slow) => {
@@ -58,7 +59,17 @@ class SlowQueriesOverTime extends Component {
     };
     var graph2d = new vis.Graph2d(container, dataset, groups, options);
     graph2d.on('click', (props) => {
-      debugger;
+      const selectedQueries = [];
+      for (const key in this.props.slowQueriesOverTime) {
+          const data = this.props.slowQueriesOverTime[key];
+          if (Math.abs(props.time.getTime() - data.ts.getTime()) < TIME_THRESHOLD) {
+            selectedQueries.push({
+              "ns": data.ns,
+              "query": data.query
+            })
+            this.props.setCurrentQuery(selectedQueries);
+          }
+      }
     })
   }
 
@@ -73,9 +84,26 @@ class SlowQueriesOverTime extends Component {
    * @returns {React.Component} the rendered component.
    */
 
+  getCurrentDetails() {
+    return this.props.selectedQueries.map((selectedQuery) => {
+      return <li className="list-item">
+        {selectedQuery.ns}: <code>{selectedQuery.query}</code>
+      </li>
+
+    })
+  }
+
   render() {
     return (
-        <div id="slowQueriesChart"></div>
+        <div>
+          <div id="slowQueriesChart"></div>
+          <p></p>
+          <div>
+            <ul>
+              {this.getCurrentDetails()}
+            </ul>
+          </div>
+        </div>
     );
   }
 }

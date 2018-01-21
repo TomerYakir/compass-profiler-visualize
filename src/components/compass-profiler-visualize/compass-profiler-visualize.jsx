@@ -18,8 +18,8 @@ class CompassProfilerVisualize extends Component {
     topQueries: []
   };
 
-  onClick = () => {
-    this.props.actions.refresh();
+  setCurrentQuery = (selectedQueries) => {
+    this.props.actions.setCurrentQuery(selectedQueries);
   }
 
   /**
@@ -36,7 +36,8 @@ class CompassProfilerVisualize extends Component {
         <h4 className={classnames(styles.title)}>Slow Queries</h4>
         <SlowQueriesOverTime
           slowQueriesOverTime={this.props.slowQueriesOverTime}
-          currentQueryDetails={this.props.currentQueryDetails}
+          selectedQueries={this.props.selectedQueries}
+          setCurrentQuery={this.setCurrentQuery}
           />
       </div>
     );

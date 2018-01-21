@@ -55,10 +55,17 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
     return {
         "topQueries": [],
         "slowQueriesOverTime": [],
-        "currentQueryDetails": ""
+        "selectedQueries": []
     };
   },
 
+  setCurrentQuery(selectedQueries) {
+    debugger;
+    this.data.selectedQueries = selectedQueries
+    this.setState(
+      {selectedQueries: selectedQueries}
+    );
+  },
 
   /**
    * log changes to the store as debug messages.
@@ -119,7 +126,7 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
         "duration": 1282
       }
     ],
-    "currentQueryDetails": "{type: 'ababa', ts: {$gt: 1739992992}, customer: 'assas'}"
+    "selectedQueries": []
     }
   }
 
