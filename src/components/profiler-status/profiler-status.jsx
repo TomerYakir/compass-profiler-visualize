@@ -3,6 +3,9 @@ import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import styles from './profiler-status.less';
+import Modal from 'react-bootstrap-modal';
+import { Radio } from 'react-bootstrap';
+import '../../../node_modules/react-bootstrap-modal/lib/css/rbm-patch.css';
 
 class ProfilerStatus extends Component {
   static displayName = 'ProfilerStatus';
@@ -16,6 +19,7 @@ class ProfilerStatus extends Component {
     profilerLevel: -1,
     operationThreshold: -1
   };
+
 
   componentDidMount() {
     this.noop();
@@ -34,10 +38,95 @@ class ProfilerStatus extends Component {
    * @returns {React.Component} the rendered component.
    */
 
+  getProfilerState() {
+
+    switch (this.props.profilerLevel) {
+      case 0: // disabled
+        return <span className="pull-right label label-default">DISABLED</span>
+        break;
+      case 1: // slow operations
+        return <span className="pull-right label label-primary">ONLY SLOW OPS</span>
+      case 2: // everything
+        return <span className="pull-right label label-info">ALL OPERATIONS</span>
+      default:
+        return <span className="pull-right label label-warning">UNKNOWN</span>
+    }
+  }
+
+  constructor(props){
+    super(props);
+
+    this.state = {
+      open: false,
+      toProfilerLevel: -1,
+      toThreshold: -1
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (this.props != prevProps) {
+      this.setState({
+        toProfilerLevel: this.props.profilerLevel,
+        toThreshold: this.props.operationThreshold
+      })
+    }
+  }
+
   render() {
+
+    let close = () => this.setState({ open: false });
+    let saveAndClose = () => {
+      this.props.setProfilerConfig(this.state.toProfilerLevel, parseInt(this.state.toThreshold));
+      this.setState({ open: false });
+    }
     return (
       <div>
-        <h4 className={classnames(styles.title)}>Profiler Status</h4>
+        <span className="pull-right label label-info">Threshold: {this.props.operationThreshold}ms</span>
+        {this.getProfilerState()}
+
+        <Modal
+           className={classnames(styles.modal)}
+           show={this.state.open} onHide={close} backdrop='static'>
+          <Modal.Header>
+            <Modal.Title>Configure Profiler</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div className="form-group">
+              <Radio name="groupOptions"
+                checked={this.state.toProfilerLevel == 0}
+                onChange={ (e) => { this.setState({toProfilerLevel: 0}) }} >Profiler Off</Radio>
+              <Radio name="groupOptions"
+                checked={this.state.toProfilerLevel == 1}
+                onChange={ (e) => { this.setState({toProfilerLevel: 1}) }} >Slow Operations Only</Radio>
+              <Radio name="groupOptions"
+                checked={this.state.toProfilerLevel == 2}
+                onChange={ (e) => { this.setState({toProfilerLevel: 2}) }} >All Operations</Radio>
+            </div>
+            <div className="form-group">
+              <label htmlFor="threshold">Threshold (ms):</label>
+              <input type="number"
+                value={this.state.toThreshold}
+                onChange={ (e) => { this.setState({toThreshold: e.target.value }) }}
+                className="form-control" id="threshold"></input>
+            </div>
+          </Modal.Body>
+
+          <Modal.Footer>
+            <button className='btn btn-primary' onClick={saveAndClose}>
+              Save
+            </button>
+            <Modal.Dismiss
+              className='btn btn-default'>
+              Close
+            </Modal.Dismiss>
+          </Modal.Footer>
+        </Modal>
+
+        <button
+          className='btn btn-primary btn-xs'
+          onClick={() => this.setState({ open: true }) }>
+          Configure Profiler
+        </button>
       </div>
     );
   }

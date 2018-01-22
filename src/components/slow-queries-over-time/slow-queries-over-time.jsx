@@ -10,11 +10,13 @@ class SlowQueriesOverTime extends Component {
   static displayName = 'SlowQueriesOverTime';
 
   static propTypes = {
-    topQueries: PropTypes.array
+    slowQueriesOverTime: PropTypes.array,
+    selectedQueries: PropTypes.array,
+    setCurrentQuery: PropTypes.func
   };
 
   static defaultProps = {
-    topQueries: []
+    slowQueriesOverTime: []
   };
 
   currentGroups = {}

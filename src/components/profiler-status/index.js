@@ -1,4 +1,4 @@
-import TopQueries from './top-queries';
+import ProfilerStatus from './profiler-status';
 
-export default TopQueries;
-export { TopQueries };
+export default ProfilerStatus;
+export { ProfilerStatus };

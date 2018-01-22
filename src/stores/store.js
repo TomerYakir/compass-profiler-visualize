@@ -59,12 +59,14 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
   },
 
   getSlowQueries() {
+    const MAX_SLOW_QUERIES = 10000;
     const databaseName = 'euphonia';
     const profileCollectionName = databaseName + '.system.profile';
     const filter = {"ns": {"$ne": profileCollectionName}};
     const findOptions = {
       fields: { op:true, ns:true, query:true, command:true, millis: true, ts:true },
       skip: 0,
+      limit: MAX_SLOW_QUERIES,
       promoteValues: false
     };
     this.dataService.find(profileCollectionName, filter, findOptions, (error, documents) => {
@@ -106,19 +108,14 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
         this.data.topQueries = topQueries;
         this.data.slowQueriesOverTime = slowQueries;
         this.setState(this.data);
-        // this.trigger(this.state);
+        this.trigger(this.state);
         //console.log("getSlowQueries:data updated " + this.data.slowQueriesOverTime.length);
       }
     });
   },
 
   loadDataFromServer() {
-    this.getSlowQueries();
     this.getProfilerStatus();
-  },
-
-  returnPromise(func, arg) {
-    return new Promise(func.bind(this, arg));
   },
 
   refresh() {
@@ -183,6 +180,18 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
     };
   },
 
+
+  setProfilerConfig(profileLevel, threshold) {
+    const databaseName = 'euphonia';
+    this.dataService.command(databaseName, {profile: profileLevel, slowms: threshold}, (error, results) => {
+      if (error) {
+        // console.log('cannot run getProfilerStatus command - ' + error);
+      } else {
+        this.getProfilerStatus();
+      }
+    });
+  },
+
   getProfilerStatus() {
     const databaseName = 'euphonia';
     this.dataService.command(databaseName, {profile: -1}, (error, results) => {
@@ -191,6 +200,8 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
       } else {
         this.data.operationThreshold = results.slowms;
         this.data.profilerLevel = results.was;
+        this.getSlowQueries();
+        // this.setState(this.data);
       }
     });
   },

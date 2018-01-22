@@ -20,7 +20,15 @@ class CompassProfilerVisualize extends Component {
 
   setCurrentQuery = (selectedQueries) => {
     this.props.actions.setCurrentQuery(selectedQueries);
-  }
+  };
+
+  setProfilerConfig = (profileLevel, threshold) => {
+    this.props.actions.setProfilerConfig(profileLevel, threshold);
+  };
+
+  transProfilerConfig = (profileLevel) => {
+    this.props.actions.transProfilerConfig(profileLevel);
+  };
 
   /**
    * Render CompassProfilerVisualize component.
@@ -33,6 +41,9 @@ class CompassProfilerVisualize extends Component {
         <ProfilerStatus
           operationThreshold={this.props.operationThreshold}
           profilerLevel={this.props.profilerLevel}
+          toProfilerLevel={this.props.profilerLevel}
+          setProfilerConfig={this.setProfilerConfig}
+          transProfilerConfig={this.transProfilerConfig}
         />
         <p></p>
         <TopQueries topQueries={this.props.topQueries} />
