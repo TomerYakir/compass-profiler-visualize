@@ -6,7 +6,7 @@ import CompassProfilerVisualizeStore from 'stores';
  * A sample role for the component.
  */
 const ROLE = {
-  name: 'CompassProfilerVisualize',
+  name: 'Profiler',
   component: CompassProfilerVisualizePlugin
 };
 

@@ -24,9 +24,7 @@
     "prepublish": "npm run compile",
     "storybook": "start-storybook -p 9001 -c .storybook"
   },
-  "precommit": [
-    
-  ],
+  "precommit": [],
   "license": "Apache-2.0",
   "peerDependencies": {
     "debug": "^3.0.1",
@@ -119,7 +117,8 @@
     "webpack-sources": "1.0.1"
   },
   "dependencies": {
+    "percentile": "^1.2.0",
     "react-bootstrap-table": "^4.3.1",
-    "vis": "^4.21.0"
+    "vis": "4.19.1"
   }
 }

@@ -1,6 +1,10 @@
 import Reflux from 'reflux';
 import StateMixin from 'reflux-state-mixin';
+import Connection from 'mongodb-connection-model';
+import DataService from 'mongodb-data-service';
+import assert from 'assert';
 import CompassProfilerVisualizeActions from 'actions';
+import percentile from 'percentile';
 
 const debug = require('debug')('mongodb-compass:stores:compass-profiler-visualize');
 
@@ -12,27 +16,145 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
   mixins: [StateMixin.store],
 
   listenables: CompassProfilerVisualizeActions,
-
-  mockup: true,
+  dataService: null,
+  mockup: false,
   compass: false,
   data: {},
+  queryShapeDetails: {},
 
   init() {
+    // this.loadDataFromServer = this.loadDataFromServer.bind(this);
     this.refresh();
+  },
+
+  getQueryShape(query, doc) {
+    let shape = {};
+    const keys = Object.keys(query);
+    for (const key in keys) {
+      shape[keys[key]] = 1;
+    }
+    const shapeKey = JSON.stringify(shape) + ":" + doc.ns + ":" + doc.op;
+    if (!this.queryShapeDetails[shapeKey]) {
+      this.queryShapeDetails[shapeKey] = {
+        "ns": doc.ns,
+        "operation": doc.op,
+        "query": JSON.stringify(shape),
+        "count": 1,
+        "min": doc.millis.value,
+        "max": doc.millis.value,
+        "mean": 0,
+        "percNintyFive": 0,
+        "sum": doc.millis.value,
+        "values": [doc.millis.value]
+      }
+    } else {
+      const details = this.queryShapeDetails[shapeKey];
+      details["count"]++;
+      details["min"] = doc.millis.value < details["min"] ? doc.millis.value : details["min"];
+      details["max"] = doc.millis.value > details["max"] ? doc.millis.value : details["max"];
+      details["sum"] += doc.millis.value;
+      details["values"].push(doc.millis.value);
+      this.queryShapeDetails[shapeKey] = details;
+    }
+  },
+
+  getSlowQueries() {
+    const databaseName = 'euphonia';
+    const profileCollectionName = databaseName + '.system.profile';
+    const filter = {"ns": {"$ne": profileCollectionName}};
+    const findOptions = {
+      fields: { op:true, ns:true, query:true, command:true, millis: true, ts:true },
+      skip: 0,
+      promoteValues: false
+    };
+    this.dataService.find(profileCollectionName, filter, findOptions, (error, documents) => {
+      //console.log("getSlowQueries:after find");
+      if (error) {
+        //console.error('getSlowQueries:error - ' + error);
+      } else {
+        //console.log("getSlowQueries:no errors");
+        const slowQueries = [];
+        for (const idx in documents) {
+          const doc = documents[idx];
+          let docToAdd = {
+            "ts": doc.ts,
+            "ns": doc.ns,
+            "operation": doc.op,
+            "duration": doc.millis.value
+          }
+          if (["insert", "getmore", "killcursors"].indexOf(doc.op) > -1 ) { // TODO - implement getMore
+            docToAdd["query"] = "N/A";
+          } else if (["command"].indexOf(doc.op) > -1) {
+            docToAdd["query"] = JSON.stringify(doc.command);
+          } else { // find
+            docToAdd["query"] = JSON.stringify(doc.query);
+            this.getQueryShape(doc.query.filter, doc);
+          }
+          slowQueries.push(docToAdd);
+        }
+        // this.data = this.getMockState();
+        const topQueries = [];
+        let idx = 0;
+        for (const key in this.queryShapeDetails) {
+          const details = this.queryShapeDetails[key];
+          details["mean"] = Math.round(details["sum"] / details["count"],2);
+          details["percNintyFive"] = percentile(95, details["values"]);
+          details["ix"] = idx;
+          topQueries.push(details);
+          idx++;
+        }
+        this.data.topQueries = topQueries;
+        this.data.slowQueriesOverTime = slowQueries;
+        this.setState(this.data);
+        // this.trigger(this.state);
+        //console.log("getSlowQueries:data updated " + this.data.slowQueriesOverTime.length);
+      }
+    });
+  },
+
+  loadDataFromServer() {
+    this.getSlowQueries();
+    this.getProfilerStatus();
+  },
+
+  returnPromise(func, arg) {
+    return new Promise(func.bind(this, arg));
   },
 
   refresh() {
     if (this.mockup) {
       this.data = this.getMockState();
       this.setState(this.data);
+    } else {
+      if (!this.compass) {
+        if (!this.dataService) {
+        //  debugger;
+          this.dataService = new DataService(new Connection({
+            hostname: '127.0.0.1',
+            port: 27000,
+            ns: 'euphonia'
+          }));
+        }
+        this.dataService.connect((err) => {
+          // debugger;
+          console.log("connected?");
+          assert.equal(null, err);
+          console.log("connected - after assert");
+          this.loadDataFromServer();
+        });
+      }
     }
   },
 
   onActivated(appRegistry) {
 
      appRegistry.on('data-service-connected', (error, dataService) => {
-       // dataService is connected or errored.
-       // DataService API: https://github.com/mongodb-js/data-service/blob/master/lib/data-service.js
+       if (error) {
+        console.log('onConnected:error - ' + error);
+      } else {
+        this.dataService = dataService;
+        this.loadDataFromServer();
+      }
      });
 
      appRegistry.on('database-changed', (namespace) => {
@@ -55,12 +177,25 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
     return {
         "topQueries": [],
         "slowQueriesOverTime": [],
-        "selectedQueries": []
+        "selectedQueries": [],
+        "profilerLevel": -1,
+        "operationThreshold": -1
     };
   },
 
+  getProfilerStatus() {
+    const databaseName = 'euphonia';
+    this.dataService.command(databaseName, {profile: -1}, (error, results) => {
+      if (error) {
+        // console.log('cannot run getProfilerStatus command - ' + error);
+      } else {
+        this.data.operationThreshold = results.slowms;
+        this.data.profilerLevel = results.was;
+      }
+    });
+  },
+
   setCurrentQuery(selectedQueries) {
-    debugger;
     this.data.selectedQueries = selectedQueries
     this.setState(
       {selectedQueries: selectedQueries}
@@ -105,6 +240,7 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
     ],
     "slowQueriesOverTime": [
       {
+        "id": 1,
         "ts": new Date(Date.UTC(2018, 1, 8, 14, 0, 0)),
         "ns": "audits.events",
         "operation": "find",
@@ -112,6 +248,7 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
         "duration": 10030
       },
       {
+        "id": 2,
         "ts": new Date(Date.UTC(2018, 1, 8, 14, 5, 0)),
         "ns": "audits.events",
         "operation": "find",
@@ -119,6 +256,7 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
         "duration": 8192
       },
       {
+        "id": 3,
         "ts": new Date(Date.UTC(2018, 1, 8, 14, 6, 0)),
         "ns": "audits.customerEvents",
         "operation": "find",
@@ -126,7 +264,9 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
         "duration": 1282
       }
     ],
-    "selectedQueries": []
+    "selectedQueries": [],
+    "profilerLevel": 0,
+    "operationThreshold": 100
     }
   }
 

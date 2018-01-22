@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import {BootstrapTable, TableHeaderColumn} from 'react-bootstrap-table';
 import '../../../node_modules/react-bootstrap-table/dist/react-bootstrap-table-all.min.css';
+import styles from './top-queries.less';
 
 class TopQueries extends Component {
   static displayName = 'TopQueries';
@@ -27,7 +28,7 @@ class TopQueries extends Component {
     const node = ReactDOM.findDOMNode(this);
     return node;
   };
-  
+
   /**
    * Render TopQueries.
    *
@@ -36,6 +37,9 @@ class TopQueries extends Component {
 
   render() {
     return (
+      <div>
+        <h4 className={classnames(styles.title)}>Top Queries</h4>
+
           <BootstrapTable
             data={this.props.topQueries}
             striped
@@ -53,6 +57,7 @@ class TopQueries extends Component {
             <TableHeaderColumn dataField='percNintyFive' dataSort={ true }>95-tile (ms)</TableHeaderColumn>
             <TableHeaderColumn dataField='sum' dataSort={ true }>Sum (ms)</TableHeaderColumn>
           </BootstrapTable>
+        </div>
     );
   }
 }
