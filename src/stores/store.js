@@ -116,6 +116,7 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
 
   loadDataFromServer() {
     this.getProfilerStatus();
+    this.getSlowQueries();
   },
 
   refresh() {
@@ -133,10 +134,7 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
           }));
         }
         this.dataService.connect((err) => {
-          // debugger;
-          console.log("connected?");
           assert.equal(null, err);
-          console.log("connected - after assert");
           this.loadDataFromServer();
         });
       }
@@ -155,6 +153,7 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
      });
 
      appRegistry.on('database-changed', (namespace) => {
+       alert(namespace);
     //   // The database has changed.
     //   // Namespace format: 'database.collection';
     //   // Collection selected: 'database.collection';
@@ -200,8 +199,8 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
       } else {
         this.data.operationThreshold = results.slowms;
         this.data.profilerLevel = results.was;
-        this.getSlowQueries();
-        // this.setState(this.data);
+
+        this.setState(this.data);
       }
     });
   },
