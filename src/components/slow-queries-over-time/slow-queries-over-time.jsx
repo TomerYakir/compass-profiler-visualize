@@ -114,7 +114,6 @@ class SlowQueriesOverTime extends Component {
   };
 
   render() {
-    console.error("render:1");
     return (
         <div>
           <h4 className={classnames(styles.title)}>Slow Queries</h4>

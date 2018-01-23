@@ -110,7 +110,7 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
         this.data.slowQueriesOverTime = slowQueries;
         this.setState(this.data);
         this.trigger(this.state);
-        console.error("getSlowQueries:data updated " + this.data.slowQueriesOverTime.length);
+
       }
     });
   },
@@ -124,9 +124,12 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
 
      appRegistry.on('data-service-connected', (error, dataService) => {
        if (error) {
-        console.log('onConnected:error - ' + error);
+        console.error('onConnected:error - ' + error);
       } else {
         this.dataService = dataService;
+        // this.currentDatabase = 'euphonia';
+        console.log('onConnected:connected');
+        // this.loadDataFromServer();
       }
      });
 

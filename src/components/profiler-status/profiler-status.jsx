@@ -3,8 +3,7 @@ import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import styles from './profiler-status.less';
-import Modal from 'react-bootstrap-modal';
-import { Radio } from 'react-bootstrap';
+import { Radio, Modal, Button } from 'react-bootstrap';
 import '../../../node_modules/react-bootstrap-modal/lib/css/rbm-patch.css';
 
 class ProfilerStatus extends Component {
@@ -85,9 +84,8 @@ class ProfilerStatus extends Component {
         {this.getProfilerState()}
 
         <Modal
-           className={classnames(styles.modal)}
-           show={this.state.open} onHide={close} backdrop='static'>
-          <Modal.Header>
+           show={this.state.open} onHide={close} >
+          <Modal.Header closeButton>
             <Modal.Title>Configure Profiler</Modal.Title>
           </Modal.Header>
           <Modal.Body>
@@ -112,13 +110,10 @@ class ProfilerStatus extends Component {
           </Modal.Body>
 
           <Modal.Footer>
-            <button className='btn btn-primary' onClick={saveAndClose}>
+            <Button bsStyle='primary' onClick={saveAndClose}>
               Save
-            </button>
-            <Modal.Dismiss
-              className='btn btn-default'>
-              Close
-            </Modal.Dismiss>
+            </Button>
+            <Button onClick={close}>Close</Button>
           </Modal.Footer>
         </Modal>
 
