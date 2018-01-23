@@ -25,8 +25,6 @@ class SlowQueriesOverTime extends Component {
 
   componentDidUpdate(prevProps, prevState) {
 
-    //  const TIME_THRESHOLD = 60000; // for chart selection
-
     if (!this.props.slowQueriesOverTime || this.props.slowQueriesOverTime.length == 0) {
       return this.noop();
     } else {
@@ -48,7 +46,6 @@ class SlowQueriesOverTime extends Component {
         group: this.currentGroups[slow.ns]
       }
     }, this);
-
     var groups = new vis.DataSet();
     Object.keys(this.currentGroups).map((key) => {
       groups.add({
@@ -69,7 +66,6 @@ class SlowQueriesOverTime extends Component {
       }
     };
     this.graph2d = new vis.Graph2d(container, dataset, groups, options);
-
 
     this.graph2d.on('click', (props) => {
       const selectedQueries = [];
@@ -118,7 +114,7 @@ class SlowQueriesOverTime extends Component {
   };
 
   render() {
-    // TODO - no profile data detected
+    console.error("render:1");
     return (
         <div>
           <h4 className={classnames(styles.title)}>Slow Queries</h4>

@@ -1,7 +1,9 @@
 import Reflux from 'reflux';
 import StateMixin from 'reflux-state-mixin';
+/*
 import Connection from 'mongodb-connection-model';
 import DataService from 'mongodb-data-service';
+*/
 import assert from 'assert';
 import CompassProfilerVisualizeActions from 'actions';
 import percentile from 'percentile';
@@ -17,14 +19,13 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
 
   listenables: CompassProfilerVisualizeActions,
   dataService: null,
-  mockup: false,
-  compass: false,
+  // mockup: false,
   data: {},
   queryShapeDetails: {},
+  currentDatabase: null,
 
   init() {
-    // this.loadDataFromServer = this.loadDataFromServer.bind(this);
-    this.refresh();
+
   },
 
   getQueryShape(query, doc) {
@@ -58,10 +59,10 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
     }
   },
 
-  getSlowQueries() {
+  getSlowQueries(databaseName) {
     const MAX_SLOW_QUERIES = 10000;
-    const databaseName = 'euphonia';
-    const profileCollectionName = databaseName + '.system.profile';
+    // const databaseName = 'euphonia';
+    const profileCollectionName = this.currentDatabase + '.system.profile';
     const filter = {"ns": {"$ne": profileCollectionName}};
     const findOptions = {
       fields: { op:true, ns:true, query:true, command:true, millis: true, ts:true },
@@ -72,7 +73,7 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
     this.dataService.find(profileCollectionName, filter, findOptions, (error, documents) => {
       //console.log("getSlowQueries:after find");
       if (error) {
-        //console.error('getSlowQueries:error - ' + error);
+        console.error('getSlowQueries:error - ' + error);
       } else {
         //console.log("getSlowQueries:no errors");
         const slowQueries = [];
@@ -109,7 +110,7 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
         this.data.slowQueriesOverTime = slowQueries;
         this.setState(this.data);
         this.trigger(this.state);
-        //console.log("getSlowQueries:data updated " + this.data.slowQueriesOverTime.length);
+        console.error("getSlowQueries:data updated " + this.data.slowQueriesOverTime.length);
       }
     });
   },
@@ -119,28 +120,6 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
     this.getSlowQueries();
   },
 
-  refresh() {
-    if (this.mockup) {
-      this.data = this.getMockState();
-      this.setState(this.data);
-    } else {
-      if (!this.compass) {
-        if (!this.dataService) {
-        //  debugger;
-          this.dataService = new DataService(new Connection({
-            hostname: '127.0.0.1',
-            port: 27000,
-            ns: 'euphonia'
-          }));
-        }
-        this.dataService.connect((err) => {
-          assert.equal(null, err);
-          this.loadDataFromServer();
-        });
-      }
-    }
-  },
-
   onActivated(appRegistry) {
 
      appRegistry.on('data-service-connected', (error, dataService) => {
@@ -148,12 +127,12 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
         console.log('onConnected:error - ' + error);
       } else {
         this.dataService = dataService;
-        this.loadDataFromServer();
       }
      });
 
      appRegistry.on('database-changed', (namespace) => {
-       alert(namespace);
+       this.currentDatabase = namespace;
+       this.loadDataFromServer();
     //   // The database has changed.
     //   // Namespace format: 'database.collection';
     //   // Collection selected: 'database.collection';
@@ -181,8 +160,7 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
 
 
   setProfilerConfig(profileLevel, threshold) {
-    const databaseName = 'euphonia';
-    this.dataService.command(databaseName, {profile: profileLevel, slowms: threshold}, (error, results) => {
+    this.dataService.command(this.currentDatabase, {profile: profileLevel, slowms: threshold}, (error, results) => {
       if (error) {
         // console.log('cannot run getProfilerStatus command - ' + error);
       } else {
@@ -192,8 +170,7 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
   },
 
   getProfilerStatus() {
-    const databaseName = 'euphonia';
-    this.dataService.command(databaseName, {profile: -1}, (error, results) => {
+    this.dataService.command(this.currentDatabase, {profile: -1}, (error, results) => {
       if (error) {
         // console.log('cannot run getProfilerStatus command - ' + error);
       } else {
