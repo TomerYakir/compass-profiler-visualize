@@ -2,8 +2,8 @@ import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
-import vis from '../../../node_modules/vis/dist/vis.min.js';
-import '../../../node_modules/vis/dist/vis.min.css';
+import { DataSet, Graph2d } from 'vis';
+import 'vis/dist/vis.min.css';
 import styles from './slow-queries-over-time.less';
 
 class SlowQueriesOverTime extends Component {
@@ -25,10 +25,10 @@ class SlowQueriesOverTime extends Component {
 
   componentDidUpdate(prevProps, prevState) {
 
-    if (!this.props.slowQueriesOverTime || this.props.slowQueriesOverTime.length == 0) {
+    if (!this.props.slowQueriesOverTime || this.props.slowQueriesOverTime.length === 0) {
       return this.noop();
     } else {
-      if (this.props.slowQueriesOverTime == prevProps.slowQueriesOverTime) {
+      if (this.props.slowQueriesOverTime === prevProps.slowQueriesOverTime) {
         return this.noop();
       }
     }
@@ -46,7 +46,7 @@ class SlowQueriesOverTime extends Component {
         group: this.currentGroups[slow.ns]
       }
     }, this);
-    var groups = new vis.DataSet();
+    var groups = new DataSet();
     Object.keys(this.currentGroups).map((key) => {
       groups.add({
         id: this.currentGroups[key],
@@ -54,7 +54,7 @@ class SlowQueriesOverTime extends Component {
       })
     })
 
-    var dataset = new vis.DataSet(items);
+    var dataset = new DataSet(items);
     var options = {
       style:'points',
       legend: true,
@@ -65,7 +65,7 @@ class SlowQueriesOverTime extends Component {
         }
       }
     };
-    this.graph2d = new vis.Graph2d(container, dataset, groups, options);
+    this.graph2d = new Graph2d(container, dataset, groups, options);
 
     this.graph2d.on('click', (props) => {
       const selectedQueries = [];
@@ -87,13 +87,10 @@ class SlowQueriesOverTime extends Component {
   // A no-operation so that the linter passes for the compass-plugin template,
   // without the need to an ignore rule, because we want the linter to fail when this
   // dependency is "for-real" not being used (ie: in an actual plugin).
-
-
-  /**
-   * Render TopQueries.
-   *
-   * @returns {React.Component} the rendered component.
-   */
+  noop = () => {
+    const node = ReactDOM.findDOMNode(this);
+    return node;
+  };
 
   getCode(selectedQuery) {
     return selectedQuery.query == 'N/A' ? '' : <code>${selectedQuery.query}</code>;
@@ -101,21 +98,22 @@ class SlowQueriesOverTime extends Component {
 
   getCurrentDetails() {
     return this.props.selectedQueries.map((selectedQuery) => {
-      return <li className="list-item" key={selectedQuery.id}>
-        {selectedQuery.ts.toISOString()} <b>{selectedQuery.operation}</b> {selectedQuery.ns}: {this.getCode(selectedQuery)} took {selectedQuery.duration}ms
-      </li>
-
-    })
+      return (
+        <li className="list-item" key={selectedQuery.id}>
+          {selectedQuery.ts.toISOString()} <b>{selectedQuery.operation}</b> {selectedQuery.ns}: {this.getCode(selectedQuery)} took {selectedQuery.duration}ms
+        </li>
+      );
+    });
   }
 
-  noop = () => {
-    const node = ReactDOM.findDOMNode(this);
-    return node;
-  };
-
+  /**
+   * Render TopQueries.
+   *
+   * @returns {React.Component} the rendered component.
+   */
   render() {
     return (
-        <div>
+        <div className={classnames(styles['slow-queries-over-time'])}>
           <h4 className={classnames(styles.title)}>Slow Queries</h4>
           <small>Click on points for details</small>
           <div id="slowQueriesChart"></div>

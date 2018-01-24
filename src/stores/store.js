@@ -1,14 +1,12 @@
 import Reflux from 'reflux';
 import StateMixin from 'reflux-state-mixin';
-/*
-import Connection from 'mongodb-connection-model';
-import DataService from 'mongodb-data-service';
-*/
-import assert from 'assert';
 import CompassProfilerVisualizeActions from 'actions';
 import percentile from 'percentile';
+const ns = require('mongodb-ns');
 
 const debug = require('debug')('mongodb-compass:stores:compass-profiler-visualize');
+
+const MAX_SLOW_QUERIES = 10000;
 
 /**
  * Compass Profiler Visualize store.
@@ -19,13 +17,41 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
 
   listenables: CompassProfilerVisualizeActions,
   dataService: null,
-  // mockup: false,
-  data: {},
   queryShapeDetails: {},
   currentDatabase: null,
 
-  init() {
+  onActivated(appRegistry) {
+    appRegistry.on('data-service-connected', (error, dataService) => {
+      if (error) {
+        // console.error('onConnected:error - ' + error);
+        this.setState({error: error});
+      } else {
+        this.dataService = dataService;
+        console.log('onConnected:connected');
+      }
+    });
 
+    appRegistry.on('database-changed', (namespace) => {
+      this.currentDatabase = ns(namespace).database;
+      this.loadDataFromServer();
+    });
+  },
+
+  /**
+   * Initialize the Compass Profiler Visualize store state. The returned object must
+   * contain all keys that you might want to modify with this.setState().
+   *
+   * @return {Object} initial store state.
+   */
+  getInitialState() {
+    return {
+      topQueries: [],
+      slowQueriesOverTime: [],
+      selectedQueries: [],
+      profilerLevel: -1,
+      operationThreshold: 15,
+      error: null
+    };
   },
 
   getQueryShape(query, doc) {
@@ -59,9 +85,7 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
     }
   },
 
-  getSlowQueries(databaseName) {
-    const MAX_SLOW_QUERIES = 10000;
-    // const databaseName = 'euphonia';
+  getSlowQueries() {
     const profileCollectionName = this.currentDatabase + '.system.profile';
     const filter = {"ns": {"$ne": profileCollectionName}};
     const findOptions = {
@@ -71,31 +95,32 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
       promoteValues: false
     };
     this.dataService.find(profileCollectionName, filter, findOptions, (error, documents) => {
-      //console.log("getSlowQueries:after find");
+      // console.log("getSlowQueries:after find");
       if (error) {
-        console.error('getSlowQueries:error - ' + error);
+        // console.error('getSlowQueries:error - ' + error);
+        this.setState({error: error});
       } else {
-        //console.log("getSlowQueries:no errors");
+        // console.log("getSlowQueries:no errors");
         const slowQueries = [];
-        for (const idx in documents) {
-          const doc = documents[idx];
+        for (const doc of documents) {
           let docToAdd = {
             "ts": doc.ts,
             "ns": doc.ns,
             "operation": doc.op,
             "duration": doc.millis.value
-          }
+          };
           if (["insert", "getmore", "killcursors"].indexOf(doc.op) > -1 ) { // TODO - implement getMore
             docToAdd["query"] = "N/A";
           } else if (["command"].indexOf(doc.op) > -1) {
             docToAdd["query"] = JSON.stringify(doc.command);
+          } else if (["remove", "update"].indexOf(doc.op) > -1) {
+            docToAdd["query"] = JSON.stringify(doc.query)
           } else { // find
             docToAdd["query"] = JSON.stringify(doc.query);
             this.getQueryShape(doc.query.filter, doc);
           }
           slowQueries.push(docToAdd);
         }
-        // this.data = this.getMockState();
         const topQueries = [];
         let idx = 0;
         for (const key in this.queryShapeDetails) {
@@ -106,68 +131,33 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
           topQueries.push(details);
           idx++;
         }
-        this.data.topQueries = topQueries;
-        this.data.slowQueriesOverTime = slowQueries;
-        this.setState(this.data);
-        this.trigger(this.state);
-
+        this.setState({
+          topQueries: topQueries,
+          slowQueriesOverTime: slowQueries,
+          error: null
+        });
       }
     });
   },
 
   loadDataFromServer() {
-    this.getProfilerStatus();
-    this.getSlowQueries();
+    if (!this.state.error) {
+      this.getProfilerStatus();
+      this.getSlowQueries();
+    }
   },
-
-  onActivated(appRegistry) {
-
-     appRegistry.on('data-service-connected', (error, dataService) => {
-       if (error) {
-        console.error('onConnected:error - ' + error);
-      } else {
-        this.dataService = dataService;
-        // this.currentDatabase = 'euphonia';
-        console.log('onConnected:connected');
-        // this.loadDataFromServer();
-      }
-     });
-
-     appRegistry.on('database-changed', (namespace) => {
-       this.currentDatabase = namespace;
-       this.loadDataFromServer();
-    //   // The database has changed.
-    //   // Namespace format: 'database.collection';
-    //   // Collection selected: 'database.collection';
-    //   // Database selected: 'database';
-    //   // Instance selected: '';
-    });
-
-  },
-
-  /**
-   * Initialize the Compass Profiler Visualize store state. The returned object must
-   * contain all keys that you might want to modify with this.setState().
-   *
-   * @return {Object} initial store state.
-   */
-  getInitialState() {
-    return {
-        "topQueries": [],
-        "slowQueriesOverTime": [],
-        "selectedQueries": [],
-        "profilerLevel": -1,
-        "operationThreshold": -1
-    };
-  },
-
 
   setProfilerConfig(profileLevel, threshold) {
     this.dataService.command(this.currentDatabase, {profile: profileLevel, slowms: threshold}, (error, results) => {
       if (error) {
+        this.setState({error: error});
         // console.log('cannot run getProfilerStatus command - ' + error);
       } else {
-        this.getProfilerStatus();
+        this.setState({
+          operationThreshold: threshold,
+          profilerLevel: profileLevel,
+          error: null
+        });
       }
     });
   },
@@ -175,18 +165,20 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
   getProfilerStatus() {
     this.dataService.command(this.currentDatabase, {profile: -1}, (error, results) => {
       if (error) {
-        // console.log('cannot run getProfilerStatus command - ' + error);
+        console.log('cannot run getProfilerStatus command - ' + error);
+        this.setState({error: error});
       } else {
-        this.data.operationThreshold = results.slowms;
-        this.data.profilerLevel = results.was;
-
-        this.setState(this.data);
+        this.error = null;
+        this.setState({
+          operationThreshold: results.slowms,
+          profilerLevel: results.was,
+          error: null
+        });
       }
     });
   },
 
   setCurrentQuery(selectedQueries) {
-    this.data.selectedQueries = selectedQueries
     this.setState(
       {selectedQueries: selectedQueries}
     );

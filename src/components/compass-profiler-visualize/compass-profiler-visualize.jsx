@@ -10,25 +10,34 @@ class CompassProfilerVisualize extends Component {
   static displayName = 'CompassProfilerVisualizeComponent';
 
   static propTypes = {
-    actions: PropTypes.object.isRequired,
-    topQueries: PropTypes.array
+    actions: PropTypes.object,
+    topQueries: PropTypes.array,
+    operationThreshold: PropTypes.number,
+    profilerLevel: PropTypes.number,
+    slowQueriesOverTime: PropTypes.array,
+    selectedQueries: PropTypes.array,
+    error: PropTypes.any
   };
 
   static defaultProps = {
-    topQueries: []
+    topQueries: [],
+    operationThreshold: 15,
+    profilerLevel: -1,
+    slowQueriesOverTime: [],
+    selectedQueries: [],
+    error: null
   };
 
-  setCurrentQuery = (selectedQueries) => {
-    this.props.actions.setCurrentQuery(selectedQueries);
-  };
-
-  setProfilerConfig = (profileLevel, threshold) => {
-    this.props.actions.setProfilerConfig(profileLevel, threshold);
-  };
-
-  transProfilerConfig = (profileLevel) => {
-    this.props.actions.transProfilerConfig(profileLevel);
-  };
+  /**
+   * TODO: Render the error case with the error message.
+   */
+  renderError() {
+    return (
+      <div className={classnames(styles.main)}>
+        {this.props.error.message}
+      </div>
+    );
+  }
 
   /**
    * Render CompassProfilerVisualize component.
@@ -36,14 +45,15 @@ class CompassProfilerVisualize extends Component {
    * @returns {React.Component} The rendered component.
    */
   render() {
+    if (this.props.error) {
+      return this.renderError();
+    }
     return (
       <div className={classnames(styles.main)}>
         <ProfilerStatus
           operationThreshold={this.props.operationThreshold}
           profilerLevel={this.props.profilerLevel}
-          toProfilerLevel={this.props.profilerLevel}
-          setProfilerConfig={this.setProfilerConfig}
-          transProfilerConfig={this.transProfilerConfig}
+          setProfilerConfig={this.props.actions.setProfilerConfig}
         />
         <p></p>
         <TopQueries topQueries={this.props.topQueries} />
@@ -51,8 +61,8 @@ class CompassProfilerVisualize extends Component {
         <SlowQueriesOverTime
           slowQueriesOverTime={this.props.slowQueriesOverTime}
           selectedQueries={this.props.selectedQueries}
-          setCurrentQuery={this.setCurrentQuery}
-          />
+          setCurrentQuery={this.props.actions.setCurrentQuery}
+        />
       </div>
     );
   }
