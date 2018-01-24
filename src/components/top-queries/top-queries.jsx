@@ -30,16 +30,16 @@ class TopQueries extends Component {
             striped
             condensed
             hover>
-            <TableHeaderColumn isKey width='0' dataField='ix'>Ix</TableHeaderColumn>
-            <TableHeaderColumn dataField='ns' width='200' filter={ { type: 'TextFilter', delay: 1000 } } dataSort={ true }>Namespace</TableHeaderColumn>
-            <TableHeaderColumn dataField='operation' dataSort={ true }>Operation</TableHeaderColumn>
-            <TableHeaderColumn dataField='query' width='300' dataSort={ true }>Query</TableHeaderColumn>
-            <TableHeaderColumn dataField='count' dataSort={ true }>Count</TableHeaderColumn>
-            <TableHeaderColumn dataField='min' dataSort={ true }>Min (ms)</TableHeaderColumn>
-            <TableHeaderColumn dataField='max' dataSort={ true }>Max (ms)</TableHeaderColumn>
-            <TableHeaderColumn dataField='mean' dataSort={ true }>Mean (ms)</TableHeaderColumn>
-            <TableHeaderColumn dataField='percNintyFive' dataSort={ true }>95-tile (ms)</TableHeaderColumn>
-            <TableHeaderColumn dataField='sum' dataSort={ true }>Sum (ms)</TableHeaderColumn>
+            <TableHeaderColumn isKey width="0" dataField="ix">Ix</TableHeaderColumn>
+            <TableHeaderColumn dataField="ns" width="200" filter={ { type: 'TextFilter', delay: 1000 } } dataSort>Namespace</TableHeaderColumn>
+            <TableHeaderColumn dataField="operation" dataSort>Operation</TableHeaderColumn>
+            <TableHeaderColumn dataField="query" width="300" dataSort>Query</TableHeaderColumn>
+            <TableHeaderColumn dataField="count" dataSort>Count</TableHeaderColumn>
+            <TableHeaderColumn dataField="min" dataSort>Min (ms)</TableHeaderColumn>
+            <TableHeaderColumn dataField="max" dataSort>Max (ms)</TableHeaderColumn>
+            <TableHeaderColumn dataField="mean" dataSort>Mean (ms)</TableHeaderColumn>
+            <TableHeaderColumn dataField="percNintyFive" dataSort>95-tile (ms)</TableHeaderColumn>
+            <TableHeaderColumn dataField="sum" dataSort>Sum (ms)</TableHeaderColumn>
           </BootstrapTable>
         </div>
     );

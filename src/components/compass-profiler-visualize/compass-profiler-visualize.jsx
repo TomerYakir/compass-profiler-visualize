@@ -30,6 +30,8 @@ class CompassProfilerVisualize extends Component {
 
   /**
    * TODO: Render the error case with the error message.
+   *
+   * @returns {React.Component} The rendered error state component.
    */
   renderError() {
     return (

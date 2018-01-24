@@ -1,3 +1,4 @@
+/* eslint-disable react/sort-comp */
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
@@ -23,19 +24,17 @@ class SlowQueriesOverTime extends Component {
   currentGroupsCnt = 1
   graph2d = null
 
-  componentDidUpdate(prevProps, prevState) {
-
+  componentDidUpdate(prevProps) {
     if (!this.props.slowQueriesOverTime || this.props.slowQueriesOverTime.length === 0) {
       return this.noop();
-    } else {
-      if (this.props.slowQueriesOverTime === prevProps.slowQueriesOverTime) {
-        return this.noop();
-      }
     }
-    var container = document.getElementById("slowQueriesChart");
+    if (this.props.slowQueriesOverTime === prevProps.slowQueriesOverTime) {
+      return this.noop();
+    }
 
-    var items = this.props.slowQueriesOverTime.map((slow) => {
+    const container = document.getElementById('slowQueriesChart');
 
+    const items = this.props.slowQueriesOverTime.map((slow) => {
       if (!this.currentGroups[slow.ns]) {
         this.currentGroups[slow.ns] = this.currentGroupsCnt;
         this.currentGroupsCnt++;
@@ -44,19 +43,19 @@ class SlowQueriesOverTime extends Component {
         x: slow.ts,
         y: slow.duration,
         group: this.currentGroups[slow.ns]
-      }
+      };
     }, this);
-    var groups = new DataSet();
+    const groups = new DataSet();
     Object.keys(this.currentGroups).map((key) => {
       groups.add({
         id: this.currentGroups[key],
         content: key
-      })
-    })
+      });
+    });
 
-    var dataset = new DataSet(items);
-    var options = {
-      style:'points',
+    const dataset = new DataSet(items);
+    const options = {
+      style: 'points',
       legend: true,
       height: '400px',
       dataAxis: {
@@ -69,19 +68,20 @@ class SlowQueriesOverTime extends Component {
 
     this.graph2d.on('click', (props) => {
       const selectedQueries = [];
-      const chartStart = this.graph2d.timeAxis.step["_start"]["_d"];
-      const chartEnd = this.graph2d.timeAxis.step["_end"]["_d"];
+      const chartStart = this.graph2d.timeAxis.step._start._d;
+      const chartEnd = this.graph2d.timeAxis.step._end._d;
       const step = this.graph2d.timeAxis.step.step;
       const threshold = (chartEnd - chartStart) / (3 * (step + 3));
-      for (const key in this.props.slowQueriesOverTime) {
-          const data = this.props.slowQueriesOverTime[key];
-          if (Math.abs(props.time.getTime() - data.ts.getTime()) < threshold) {
-            data["id"] = key;
-            selectedQueries.push(data);
-            this.props.setCurrentQuery(selectedQueries);
-          }
+      const slowQueryKeys = Object.keys(this.props.slowQueriesOverTime);
+      for (const key of slowQueryKeys) {
+        const data = this.props.slowQueriesOverTime[key];
+        if (Math.abs(props.time.getTime() - data.ts.getTime()) < threshold) {
+          data.id = key;
+          selectedQueries.push(data);
+          this.props.setCurrentQuery(selectedQueries);
+        }
       }
-    })
+    });
   }
 
   // A no-operation so that the linter passes for the compass-plugin template,
@@ -93,7 +93,7 @@ class SlowQueriesOverTime extends Component {
   };
 
   getCode(selectedQuery) {
-    return selectedQuery.query == 'N/A' ? '' : <code>${selectedQuery.query}</code>;
+    return selectedQuery.query === 'N/A' ? '' : <code>${selectedQuery.query}</code>;
   }
 
   getCurrentDetails() {

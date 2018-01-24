@@ -50,9 +50,9 @@ class ProfilerStatus extends Component {
   }
 
   render() {
-    let close = () => this.setState({ open: false });
-    let saveAndClose = () => {
-      this.props.setProfilerConfig(this.state.toProfilerLevel, parseInt(this.state.toThreshold));
+    const close = () => this.setState({ open: false });
+    const saveAndClose = () => {
+      this.props.setProfilerConfig(this.state.toProfilerLevel, parseInt(this.state.toThreshold, 10));
       this.setState({ open: false });
     };
 
