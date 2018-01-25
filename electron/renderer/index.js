@@ -49,11 +49,11 @@ render(CompassProfilerVisualizePlugin);
 import Connection from 'mongodb-connection-model';
 import DataService from 'mongodb-data-service';
 
-const DB = 'db1';
+const DB = 'euphonia';
 
 const connection = new Connection({
   hostname: '127.0.0.1',
-  port: 27017,
+  port: 27000,
   ns: DB,
   mongodb_database_name: 'admin'
 });
