@@ -118,8 +118,10 @@
   },
   "dependencies": {
     "percentile": "^1.2.0",
+    "react-bootstrap-modal": "^4.0.0",
     "react-bootstrap-table": "^4.3.1",
-    "react-bootstrap-modal":"^4.0.0",
+    "react-graph-vis": "^1.0.2",
+    "react-vis": "^1.8.2",
     "vis": "4.19.1"
   }
 }

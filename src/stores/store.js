@@ -142,7 +142,8 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
   loadDataFromServer() {
     if (!this.state.error) {
       this.getProfilerStatus();
-      this.getSlowQueries();
+      // this.getSlowQueries();
+      this.setState(this.getMockState());
     }
   },
 
