@@ -1,6 +1,5 @@
 /* eslint-disable react/sort-comp */
 import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import { DataSet, Graph2d } from 'vis';
@@ -20,20 +19,12 @@ class SlowQueriesOverTime extends Component {
     slowQueriesOverTime: []
   };
 
-  currentGroups = {}
-  currentGroupsCnt = 1
-  graph2d = null
+  currentGroups = {};
+  currentGroupsCnt = 1;
+  graph2d = null;
+  ref = null;
 
-  componentDidUpdate(prevProps) {
-    if (!this.props.slowQueriesOverTime || this.props.slowQueriesOverTime.length === 0) {
-      return this.noop();
-    }
-    if (this.props.slowQueriesOverTime === prevProps.slowQueriesOverTime) {
-      return this.noop();
-    }
-
-    const container = document.getElementById('slowQueriesChart');
-
+  componentDidUpdate() {
     const items = this.props.slowQueriesOverTime.map((slow) => {
       if (!this.currentGroups[slow.ns]) {
         this.currentGroups[slow.ns] = this.currentGroupsCnt;
@@ -64,7 +55,7 @@ class SlowQueriesOverTime extends Component {
         }
       }
     };
-    this.graph2d = new Graph2d(container, dataset, groups, options);
+    this.graph2d = new Graph2d(this.ref, dataset, groups, options);
 
     this.graph2d.on('click', (props) => {
       const selectedQueries = [];
@@ -83,14 +74,6 @@ class SlowQueriesOverTime extends Component {
       }
     });
   }
-
-  // A no-operation so that the linter passes for the compass-plugin template,
-  // without the need to an ignore rule, because we want the linter to fail when this
-  // dependency is "for-real" not being used (ie: in an actual plugin).
-  noop = () => {
-    const node = ReactDOM.findDOMNode(this);
-    return node;
-  };
 
   getCode(selectedQuery) {
     return selectedQuery.query === 'N/A' ? '' : <code>${selectedQuery.query}</code>;
@@ -116,8 +99,7 @@ class SlowQueriesOverTime extends Component {
         <div className={classnames(styles['slow-queries-over-time'])}>
           <h4 className={classnames(styles.title)}>Slow Queries</h4>
           <small>Click on points for details</small>
-          <div id="slowQueriesChart"></div>
-          <p></p>
+          <div id="slowQueriesChart" ref={(r) => { this.ref = r; }} />
           <div className={classnames(styles.details)}>
             <ul>
               {this.getCurrentDetails()}
