@@ -2,7 +2,6 @@ import React from 'react';
 import { mount } from 'enzyme';
 
 import CompassProfilerVisualize from 'components/compass-profiler-visualize';
-import ToggleButton from 'components/toggle-button';
 import styles from './compass-profiler-visualize.less';
 
 describe('CompassProfilerVisualize [Component]', () => {
@@ -27,10 +26,6 @@ describe('CompassProfilerVisualize [Component]', () => {
 
   it('should contain one <h2> tag', () => {
     expect(component.find('h2')).to.have.length(1);
-  });
-
-  it('should contain one <ToggleButton />', () => {
-    expect(component.find(ToggleButton)).to.have.length(1);
   });
 
   it('should initially have prop {status: \'enabled\'}', () => {

@@ -49,22 +49,24 @@ render(CompassProfilerVisualizePlugin);
 import Connection from 'mongodb-connection-model';
 import DataService from 'mongodb-data-service';
 
+const DB = 'euphonia';
+
 const connection = new Connection({
   hostname: '127.0.0.1',
   port: 27000,
-  ns: 'euphonia',
+  ns: DB,
   mongodb_database_name: 'admin'
 });
 const dataService = new DataService(connection);
 
 appRegistry.emit('data-service-initialized', dataService);
 dataService.connect((error, ds) => {
-   appRegistry.emit('data-service-connected', error, ds);
+  appRegistry.emit('data-service-connected', error, ds);
+  appRegistry.emit('database-changed', DB);
 });
 
 // For automatic switching to specific namespaces, uncomment below as needed.
 // appRegistry.emit('collection-changed', 'database.collection');
-// appRegistry.emit('database-changed', 'database');
 
 // For plugins based on query execution, comment out below:
 // const query = {

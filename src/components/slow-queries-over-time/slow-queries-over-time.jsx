@@ -1,9 +1,9 @@
+/* eslint-disable react/sort-comp */
 import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
-import vis from '../../../node_modules/vis/dist/vis.min.js';
-import '../../../node_modules/vis/dist/vis.min.css';
+import { DataSet, Graph2d } from 'vis';
+import 'vis/dist/vis.min.css';
 import styles from './slow-queries-over-time.less';
 
 class SlowQueriesOverTime extends Component {
@@ -19,23 +19,13 @@ class SlowQueriesOverTime extends Component {
     slowQueriesOverTime: []
   };
 
-  currentGroups = {}
-  currentGroupsCnt = 1
-  graph2d = null
+  currentGroups = {};
+  currentGroupsCnt = 1;
+  graph2d = null;
+  ref = null;
 
-  componentDidUpdate(prevProps, prevState) {
-
-    if (!this.props.slowQueriesOverTime || this.props.slowQueriesOverTime.length == 0) {
-      return this.noop();
-    } else {
-      if (this.props.slowQueriesOverTime == prevProps.slowQueriesOverTime) {
-        return this.noop();
-      }
-    }
-    var container = document.getElementById("slowQueriesChart");
-
-    var items = this.props.slowQueriesOverTime.map((slow) => {
-
+  componentDidUpdate() {
+    const items = this.props.slowQueriesOverTime.map((slow) => {
       if (!this.currentGroups[slow.ns]) {
         this.currentGroups[slow.ns] = this.currentGroupsCnt;
         this.currentGroupsCnt++;
@@ -44,19 +34,19 @@ class SlowQueriesOverTime extends Component {
         x: slow.ts,
         y: slow.duration,
         group: this.currentGroups[slow.ns]
-      }
+      };
     }, this);
-    var groups = new vis.DataSet();
+    const groups = new DataSet();
     Object.keys(this.currentGroups).map((key) => {
       groups.add({
         id: this.currentGroups[key],
         content: key
-      })
-    })
+      });
+    });
 
-    var dataset = new vis.DataSet(items);
-    var options = {
-      style:'points',
+    const dataset = new DataSet(items);
+    const options = {
+      style: 'points',
       legend: true,
       height: '400px',
       dataAxis: {
@@ -65,61 +55,51 @@ class SlowQueriesOverTime extends Component {
         }
       }
     };
-    this.graph2d = new vis.Graph2d(container, dataset, groups, options);
+    this.graph2d = new Graph2d(this.ref, dataset, groups, options);
 
     this.graph2d.on('click', (props) => {
       const selectedQueries = [];
-      const chartStart = this.graph2d.timeAxis.step["_start"]["_d"];
-      const chartEnd = this.graph2d.timeAxis.step["_end"]["_d"];
+      const chartStart = this.graph2d.timeAxis.step._start._d;
+      const chartEnd = this.graph2d.timeAxis.step._end._d;
       const step = this.graph2d.timeAxis.step.step;
       const threshold = (chartEnd - chartStart) / (3 * (step + 3));
-      for (const key in this.props.slowQueriesOverTime) {
-          const data = this.props.slowQueriesOverTime[key];
-          if (Math.abs(props.time.getTime() - data.ts.getTime()) < threshold) {
-            data["id"] = key;
-            selectedQueries.push(data);
-            this.props.setCurrentQuery(selectedQueries);
-          }
+      const slowQueryKeys = Object.keys(this.props.slowQueriesOverTime);
+      for (const key of slowQueryKeys) {
+        const data = this.props.slowQueriesOverTime[key];
+        if (Math.abs(props.time.getTime() - data.ts.getTime()) < threshold) {
+          data.id = key;
+          selectedQueries.push(data);
+          this.props.setCurrentQuery(selectedQueries);
+        }
       }
-    })
+    });
   }
 
-  // A no-operation so that the linter passes for the compass-plugin template,
-  // without the need to an ignore rule, because we want the linter to fail when this
-  // dependency is "for-real" not being used (ie: in an actual plugin).
+  getCode(selectedQuery) {
+    return selectedQuery.query === 'N/A' ? '' : <code>${selectedQuery.query}</code>;
+  }
 
+  getCurrentDetails() {
+    return this.props.selectedQueries.map((selectedQuery) => {
+      return (
+        <li className="list-item" key={selectedQuery.id}>
+          {selectedQuery.ts.toISOString()} <b>{selectedQuery.operation}</b> {selectedQuery.ns}: {this.getCode(selectedQuery)} took {selectedQuery.duration}ms
+        </li>
+      );
+    });
+  }
 
   /**
    * Render TopQueries.
    *
    * @returns {React.Component} the rendered component.
    */
-
-  getCode(selectedQuery) {
-    return selectedQuery.query == 'N/A' ? '' : <code>${selectedQuery.query}</code>;
-  }
-
-  getCurrentDetails() {
-    return this.props.selectedQueries.map((selectedQuery) => {
-      return <li className="list-item" key={selectedQuery.id}>
-        {selectedQuery.ts.toISOString()} <b>{selectedQuery.operation}</b> {selectedQuery.ns}: {this.getCode(selectedQuery)} took {selectedQuery.duration}ms
-      </li>
-
-    })
-  }
-
-  noop = () => {
-    const node = ReactDOM.findDOMNode(this);
-    return node;
-  };
-
   render() {
     return (
-        <div>
+        <div className={classnames(styles['slow-queries-over-time'])}>
           <h4 className={classnames(styles.title)}>Slow Queries</h4>
           <small>Click on points for details</small>
-          <div id="slowQueriesChart"></div>
-          <p></p>
+          <div id="slowQueriesChart" ref={(r) => { this.ref = r; }} />
           <div className={classnames(styles.details)}>
             <ul>
               {this.getCurrentDetails()}
