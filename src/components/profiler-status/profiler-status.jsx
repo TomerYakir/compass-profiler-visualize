@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import styles from './profiler-status.less';
 import { Radio, Modal, Button } from 'react-bootstrap';
-import 'react-bootstrap-modal/lib/css/rbm-patch.css';
 
 const PROFILER_STATE = {
   0: 'DISABLED',

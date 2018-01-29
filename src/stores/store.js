@@ -55,8 +55,9 @@ const CompassProfilerVisualizeStore = Reflux.createStore({
   getQueryShape(query, doc) {
     const shape = {};
     const keys = Object.keys(query);
+
     for (const key of keys) {
-      shape[keys[key]] = 1;
+      shape[key] = 1;
     }
     const shapeKey = JSON.stringify(shape) + ':' + doc.ns + ':' + doc.op;
     if (!this.queryShapeDetails[shapeKey]) {

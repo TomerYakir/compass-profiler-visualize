@@ -24,7 +24,13 @@ class SlowQueriesOverTime extends Component {
   graph2d = null;
   ref = null;
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps) {
+    if (!this.props.slowQueriesOverTime ||
+      this.props.slowQueriesOverTime.length == 0 ||
+      this.props.slowQueriesOverTime == prevProps.slowQueriesOverTime) {
+      return false;
+    }
+
     const items = this.props.slowQueriesOverTime.map((slow) => {
       if (!this.currentGroups[slow.ns]) {
         this.currentGroups[slow.ns] = this.currentGroupsCnt;
